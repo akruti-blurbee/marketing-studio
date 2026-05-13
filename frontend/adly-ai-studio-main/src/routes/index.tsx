@@ -3,20 +3,30 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Upload, Sparkles, Download, Image as ImageIcon, Video, Menu } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import fashionShowcase from "@/assets/Fashion.png";
+import skincareShowcase from "@/assets/Skincare.png";
+import sneakersShowcase from "@/assets/Sneakers.png";
+import bagsShowcase from "@/assets/Bags.png";
+import kitchenShowcase from "@/assets/Kitchen-accesories.png";
+import jewelryShowcase from "@/assets/Jewelry.png";
+import electronicsShowcase from "@/assets/Electronics.png";
+import sunglassesShowcase from "@/assets/Sunglasses.png";
+import watchesShowcase from "@/assets/Watches.png";
+import sareeShowcase from "@/assets/Saree.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ADly AI — Turn Products Into Stunning Ads, Instantly" },
+      { title: "Adbee AI — Turn Products Into Stunning Ads, Instantly" },
       {
         name: "description",
         content:
-          "Upload your product image, describe your vision, and let ADly AI generate scroll-stopping ad images and videos in seconds.",
+          "Upload your product image, describe your vision, and let Adbee AI generate scroll-stopping ad images and videos in seconds.",
       },
-      { property: "og:title", content: "ADly AI — AI Ad Generator for Brands" },
+      { property: "og:title", content: "Adbee AI — AI Ad Generator for Brands" },
       {
         property: "og:description",
-        content: "Generate stunning product ads — images and videos — in seconds with ADly AI.",
+        content: "Generate stunning product ads — images and videos — in seconds with Adbee AI.",
       },
     ],
   }),
@@ -24,14 +34,16 @@ export const Route = createFileRoute("/")({
 });
 
 const marquee = [
-  "Product Ad · Fashion",
-  "Product Ad · Skincare",
-  "Product Ad · Coffee",
-  "Product Ad · Sneakers",
-  "Product Ad · Jewelry",
-  "Product Ad · Tech",
-  "Product Ad · Candles",
-  "Product Ad · Wine",
+  { label: "Product Ad · Fashion", image: fashionShowcase },
+  { label: "Product Ad · Skincare", image: skincareShowcase },
+  { label: "Product Ad · Sneakers", image: sneakersShowcase },
+  { label: "Product Ad · Bags", image: bagsShowcase },
+  { label: "Product Ad · Kitchen", image: kitchenShowcase },
+  { label: "Product Ad · Jewelry", image: jewelryShowcase },
+  { label: "Product Ad · Electronics", image: electronicsShowcase },
+  { label: "Product Ad · Sunglasses", image: sunglassesShowcase },
+  { label: "Product Ad · Watches", image: watchesShowcase },
+  { label: "Product Ad · Saree", image: sareeShowcase },
 ];
 
 function Navbar() {
@@ -72,9 +84,9 @@ function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/90 shadow-header backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-        <Link to="/" className="min-w-0 shrink">
-          <Logo />
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-3 py-3 sm:px-4 sm:py-4">
+        <Link to="/" className="-ml-1 shrink-0">
+          <Logo imageClassName="h-7 max-w-[min(100%,11.2rem)] sm:h-8 sm:max-w-[min(100%,12.4rem)]" />
         </Link>
         <nav className="hidden items-center gap-8 text-sm text-ink md:flex">{navLinks}</nav>
         <div className="flex shrink-0 items-center gap-2">
@@ -132,7 +144,7 @@ function Landing() {
             ✦ AI Ad Studio for Modern Brands
           </span>
           <h1
-            className="mt-5 font-display text-[2.25rem] font-black leading-[1.08] text-ink sm:text-5xl md:mt-6 md:text-6xl lg:text-7xl animate-fade-up"
+            className="mt-5 font-display text-[2rem] font-black leading-[1.08] text-ink sm:text-5xl md:mt-6 md:text-6xl lg:text-7xl animate-fade-up"
             style={{ animationDelay: "120ms" }}
           >
             Turn Products Into <em className="font-display italic font-medium">Stunning Ads</em>
@@ -172,16 +184,21 @@ function Landing() {
       </section>
 
       {/* Marquee */}
-      <section className="marquee-pause overflow-hidden border-y border-border bg-cream-deep/90 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+      <section className="marquee-pause overflow-hidden border-y border-border bg-cream-deep/90 py-4 sm:py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
         <div className="flex w-max animate-marquee gap-4">
-          {[...marquee, ...marquee].map((label, i) => (
+          {[...marquee, ...marquee].map((item, i) => (
             <div
               key={i}
-              className="flex h-28 w-48 shrink-0 flex-col justify-end rounded-2xl border border-border/90 bg-white/90 p-3 shadow-surface-xs backdrop-blur-sm"
+              className="flex h-40 w-40 shrink-0 flex-col justify-end rounded-2xl border border-border/90 bg-white/90 p-2.5 shadow-surface-xs backdrop-blur-sm sm:h-48 sm:w-48 sm:p-3"
             >
-              <div className="-mt-1 mb-2 h-14 w-full rounded-xl bg-white" />
+              <img
+                src={item.image}
+                alt={item.label}
+                className="-mt-1 mb-2 min-h-0 flex-1 w-full rounded-xl border border-border/50 object-cover object-center"
+                loading="lazy"
+              />
               <span className="font-mono text-[10px] uppercase tracking-wider text-warm-gray">
-                {label}
+                {item.label}
               </span>
             </div>
           ))}
@@ -270,7 +287,7 @@ function Landing() {
       {/* Footer */}
       <footer className="border-t border-border bg-cream-deep/95 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 py-10 sm:px-6 md:flex-row">
-          <Logo />
+          <Logo imageClassName="h-11 max-w-[min(100%,18rem)] sm:h-12 sm:max-w-[min(100%,20rem)]" />
           <nav className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-ink">
             <Link to="/" className="transition-colors hover:text-warm-gray">
               Home

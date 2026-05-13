@@ -23,7 +23,7 @@ export const Route = createFileRoute("/verify-otp")({
 });
 
 const otpSlotClass =
-  "h-12 w-11 rounded-xl border border-border border-y border-l border-r bg-white text-base font-medium text-ink shadow-surface-xs first:rounded-xl first:border-l last:rounded-xl last:border-r";
+  "h-11 w-10 rounded-xl border border-border border-y border-l border-r bg-white text-sm font-medium text-ink shadow-surface-xs first:rounded-xl first:border-l last:rounded-xl last:border-r sm:h-12 sm:w-11 sm:text-base";
 
 function VerifyOtpPage() {
   const { email } = Route.useSearch();
@@ -68,7 +68,7 @@ function VerifyOtpPage() {
               setError(null);
               submitRef.current?.focus();
             }}
-            containerClassName="gap-2 justify-center"
+            containerClassName="justify-center gap-1.5 sm:gap-2"
             aria-label="One-time password"
           >
             <InputOTPGroup>

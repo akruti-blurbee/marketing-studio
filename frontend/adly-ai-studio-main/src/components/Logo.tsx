@@ -1,16 +1,22 @@
-import { Sparkle } from "lucide-react";
+import adbeeLogo from "@/assets/adbeeai-logo.png";
 
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({
+  className = "",
+  imageClassName = "",
+}: {
+  className?: string;
+  imageClassName?: string;
+}) {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <div className="relative flex h-8 w-8 items-center justify-center rounded-lg border border-ink/10 bg-ink text-white shadow-surface-sm">
-        <Sparkle className="h-4 w-4 absolute" strokeWidth={2.5} />
-        <span className="font-display font-black text-[15px] leading-none mt-[1px]">A</span>
-      </div>
-      <span className="font-sans text-[18px] tracking-tight">
-        <span className="font-bold text-ink">ADly</span>{" "}
-        <span className="font-light text-warm-gray">AI</span>
-      </span>
+    <div className={`flex items-center ${className}`}>
+      <img
+        src={adbeeLogo}
+        alt="AdbeeAI"
+        width={1168}
+        height={483}
+        className={`h-8 w-auto max-w-[min(11.2rem)] object-contain object-left drop-shadow-[0_1px_1px_rgba(0,0,0,0.18)] sm:h-9 sm:max-w-[min(100%,14.4rem)] ${imageClassName}`}
+        decoding="async"
+      />
     </div>
   );
 }
