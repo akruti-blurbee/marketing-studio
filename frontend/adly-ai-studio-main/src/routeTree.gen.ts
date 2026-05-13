@@ -9,10 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GenerateVideoRouteImport } from './routes/generate-video'
 import { Route as GenerateImageRouteImport } from './routes/generate-image'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VerifyOtpRoute = VerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GenerateVideoRoute = GenerateVideoRouteImport.update({
   id: '/generate-video',
   path: '/generate-video',
@@ -33,34 +51,86 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/generate-image': typeof GenerateImageRoute
   '/generate-video': typeof GenerateVideoRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/verify-otp': typeof VerifyOtpRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/generate-image': typeof GenerateImageRoute
   '/generate-video': typeof GenerateVideoRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/verify-otp': typeof VerifyOtpRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/generate-image': typeof GenerateImageRoute
   '/generate-video': typeof GenerateVideoRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/verify-otp': typeof VerifyOtpRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/generate-image' | '/generate-video'
+  fullPaths:
+    | '/'
+    | '/generate-image'
+    | '/generate-video'
+    | '/login'
+    | '/signup'
+    | '/verify-otp'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/generate-image' | '/generate-video'
-  id: '__root__' | '/' | '/generate-image' | '/generate-video'
+  to:
+    | '/'
+    | '/generate-image'
+    | '/generate-video'
+    | '/login'
+    | '/signup'
+    | '/verify-otp'
+  id:
+    | '__root__'
+    | '/'
+    | '/generate-image'
+    | '/generate-video'
+    | '/login'
+    | '/signup'
+    | '/verify-otp'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GenerateImageRoute: typeof GenerateImageRoute
   GenerateVideoRoute: typeof GenerateVideoRoute
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
+  VerifyOtpRoute: typeof VerifyOtpRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-otp': {
+      id: '/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/verify-otp'
+      preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/generate-video': {
       id: '/generate-video'
       path: '/generate-video'
@@ -89,6 +159,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GenerateImageRoute: GenerateImageRoute,
   GenerateVideoRoute: GenerateVideoRoute,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
+  VerifyOtpRoute: VerifyOtpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

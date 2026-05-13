@@ -2,12 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Upload, Sparkles, Download, Image as ImageIcon, Video, Menu } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -52,14 +47,14 @@ function Navbar() {
         Home
       </Link>
       <Link
-        to="/generate-image"
+        to="/login"
         className="rounded-lg px-3 py-3 text-base text-ink hover:bg-cream-deep md:px-0 md:py-0 md:text-sm md:hover:bg-transparent md:hover:text-warm-gray"
         onClick={() => setOpen(false)}
       >
         Generate Image
       </Link>
       <Link
-        to="/generate-video"
+        to="/login"
         className="rounded-lg px-3 py-3 text-base text-ink hover:bg-cream-deep md:px-0 md:py-0 md:text-sm md:hover:bg-transparent md:hover:text-warm-gray"
         onClick={() => setOpen(false)}
       >
@@ -101,7 +96,7 @@ function Navbar() {
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-1 border-t border-border pt-4">{navLinks}</nav>
               <Link
-                to="/generate-image"
+                to="/login"
                 onClick={() => setOpen(false)}
                 className="btn-press mt-6 flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black"
               >
@@ -110,7 +105,7 @@ function Navbar() {
             </SheetContent>
           </Sheet>
           <Link
-            to="/generate-image"
+            to="/login"
             className="btn-press inline-flex min-h-10 items-center rounded-full bg-ink px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-black sm:px-5 sm:text-sm"
           >
             <span className="sm:hidden">Start</span>
@@ -155,13 +150,13 @@ function Landing() {
             style={{ animationDelay: "360ms" }}
           >
             <Link
-              to="/generate-image"
+              to="/login"
               className="btn-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ink/10 bg-caramel px-6 py-3.5 font-medium text-white shadow-surface-sm transition-[color,background-color,box-shadow,transform] hover:bg-caramel-deep hover:shadow-surface-md"
             >
               Generate Image →
             </Link>
             <Link
-              to="/generate-video"
+              to="/login"
               className="btn-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ink/10 bg-caramel px-6 py-3.5 font-medium text-white shadow-surface-sm transition-[color,background-color,box-shadow,transform] hover:bg-caramel-deep hover:shadow-surface-md"
             >
               Generate Video →
@@ -210,20 +205,17 @@ function Landing() {
               {
                 icon: <Upload className="h-5 w-5" />,
                 title: "Upload Your Product",
-                body:
-                  "Drop in any product photo. Our AI understands your product's shape, color, and identity.",
+                body: "Drop in any product photo. Our AI understands your product's shape, color, and identity.",
               },
               {
                 icon: <Sparkles className="h-5 w-5" />,
                 title: "Describe Your Vision",
-                body:
-                  "Write a prompt or leave it blank. ADly AI generates creative ad copy and scene suggestions automatically.",
+                body: "Write a prompt or leave it blank. ADly AI generates creative ad copy and scene suggestions automatically.",
               },
               {
                 icon: <Download className="h-5 w-5" />,
                 title: "Download & Launch",
-                body:
-                  "Get your polished ad image or video ready to post on Instagram, Amazon, or anywhere.",
+                body: "Get your polished ad image or video ready to post on Instagram, Amazon, or anywhere.",
               },
             ].map((s, i) => (
               <div
@@ -262,14 +254,14 @@ function Landing() {
               icon={<ImageIcon className="h-7 w-7" />}
               title="AI Ad Images"
               body="Perfect product shots, lifestyle scenes, and editorial layouts — generated from a single photo."
-              to="/generate-image"
+              to="/login"
             />
             <FormatCard
               bg="bg-powder"
               icon={<Video className="h-7 w-7" />}
               title="AI Ad Videos"
               body="Animated product showcases, UGC-style clips, and cinematic ads — no camera needed."
-              to="/generate-video"
+              to="/login"
             />
           </div>
         </div>
@@ -283,10 +275,10 @@ function Landing() {
             <Link to="/" className="transition-colors hover:text-warm-gray">
               Home
             </Link>
-            <Link to="/generate-image" className="transition-colors hover:text-warm-gray">
+            <Link to="/login" className="transition-colors hover:text-warm-gray">
               Generate Image
             </Link>
-            <Link to="/generate-video" className="transition-colors hover:text-warm-gray">
+            <Link to="/login" className="transition-colors hover:text-warm-gray">
               Generate Video
             </Link>
             <a href="#" className="transition-colors hover:text-warm-gray">
@@ -323,8 +315,12 @@ function FormatCard({
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-white/95 text-ink shadow-surface-xs sm:h-14 sm:w-14">
           {icon}
         </div>
-        <h3 className="mt-6 font-serif text-2xl text-ink sm:mt-8 sm:text-3xl md:text-4xl">{title}</h3>
-        <p className="mt-3 max-w-md text-sm leading-relaxed text-ink/80 sm:mt-4 sm:text-base">{body}</p>
+        <h3 className="mt-6 font-serif text-2xl text-ink sm:mt-8 sm:text-3xl md:text-4xl">
+          {title}
+        </h3>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-ink/80 sm:mt-4 sm:text-base">
+          {body}
+        </p>
       </div>
       <Link
         to={to}
