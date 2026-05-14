@@ -1,25 +1,46 @@
-"""FastAPI server for ADly image generation (FLUX i2i + optional Gemini)."""
+"""FastAPI server — ADly image generation (FLUX i2i + Gemini) + Auth."""
 
 from __future__ import annotations
 
 import base64
 import os
 import sys
+from contextlib import asynccontextmanager
 from typing import Annotated
 
-# Repo root on path for `flux_i2i_service`
-_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if _ROOT not in sys.path:
-    sys.path.insert(0, _ROOT)
+from dotenv import load_dotenv
+
+# Load root .env (one level up from backend/)
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from starlette.middleware.sessions import SessionMiddleware
 
+from config.database import close_db, connect_db
 from flux_i2i_service import GEMINI_MODEL_ID, generate_ad_image, image_to_png_bytes
+from routes.auth import router as auth_router
 
-app = FastAPI(title="Marketing Studio API", version="1.0.0")
 
+# ── Lifespan (startup / shutdown) ──────────────────────────────────────────────
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await connect_db()
+    yield
+    await close_db()
+
+
+# ── App ────────────────────────────────────────────────────────────────────────
+
+app = FastAPI(title="ADbee Marketing Studio API", version="2.0.0", lifespan=lifespan)
+
+# Session middleware required for Google OAuth state (authlib)
+_session_secret = os.getenv("SESSION_SECRET", os.getenv("JWT_SECRET", "change-me-in-production"))
+app.add_middleware(SessionMiddleware, secret_key=_session_secret)
+
+# CORS
 _default_origins = (
     "http://localhost:5173,http://127.0.0.1:5173,"
     "http://localhost:3000,http://127.0.0.1:3000,"
@@ -36,6 +57,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Routers ────────────────────────────────────────────────────────────────────
+
+app.include_router(auth_router)
+
+
+# ── Image generation routes ────────────────────────────────────────────────────
 
 class HealthResponse(BaseModel):
     ok: bool

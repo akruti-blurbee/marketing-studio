@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/AuthContext";
+import { redirectToGoogleLogin } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -19,11 +23,14 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const navigate = useNavigate();
+  const { login, loginWithCredentials } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -37,10 +44,29 @@ function LoginPage() {
       return;
     }
 
-    toast.success("Demo only", {
-      description: "Wire this form to your auth API when the backend is ready.",
-    });
+    setIsLoading(true);
+    try {
+      await loginWithCredentials(trimmed, password);
+      toast.success("Welcome back! 👋");
+      navigate({ to: "/generate-image" });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        // Unverified account — redirect to OTP page
+        if (err.code === "UNVERIFIED") {
+          toast.info("Check your email for a verification code.");
+          navigate({ to: "/verify-otp", search: { email: trimmed } });
+          return;
+        }
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
+
+  void login; // used via loginWithCredentials inside context
 
   return (
     <AuthShell title="Welcome back" subtitle="Log in to continue creating stunning ads">
@@ -57,6 +83,7 @@ function LoginPage() {
             placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
             className="h-11 rounded-xl border-border bg-white px-4 text-base shadow-surface-xs md:text-sm"
           />
         </div>
@@ -71,7 +98,7 @@ function LoginPage() {
               className="text-xs font-medium text-caramel hover:text-caramel-deep hover:underline"
               onClick={() =>
                 toast.message("Reset password", {
-                  description: "Add a reset flow when backend is ready.",
+                  description: "Password reset flow coming soon.",
                 })
               }
             >
@@ -86,6 +113,7 @@ function LoginPage() {
             placeholder="Your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
             className="h-11 rounded-xl border-border bg-white px-4 text-base shadow-surface-xs md:text-sm"
           />
         </div>
@@ -99,9 +127,17 @@ function LoginPage() {
         <Button
           type="submit"
           variant="outline"
-          className="btn-press h-11 w-full rounded-xl border-ink/20 bg-white text-base font-semibold text-ink shadow-surface-xs hover:bg-cream-deep/40"
+          disabled={isLoading}
+          className="btn-press h-11 w-full rounded-xl border-ink/20 bg-white text-base font-semibold text-ink shadow-surface-xs hover:bg-cream-deep/40 disabled:opacity-60"
         >
-          Log in
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Logging in…
+            </span>
+          ) : (
+            "Log in"
+          )}
         </Button>
       </form>
 
@@ -116,9 +152,7 @@ function LoginPage() {
 
       <GoogleAuthButton
         label="Continue with Google"
-        onClick={() =>
-          toast.message("Google sign-in", { description: "Connect your backend to enable OAuth." })
-        }
+        onClick={redirectToGoogleLogin}
       />
 
       <p className="mt-6 text-center text-sm text-warm-gray">

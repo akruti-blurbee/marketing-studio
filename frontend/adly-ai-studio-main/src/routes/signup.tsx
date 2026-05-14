@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signUp } from "@/lib/auth";
+import { redirectToGoogleLogin } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -20,12 +24,14 @@ export const Route = createFileRoute("/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
@@ -43,15 +49,44 @@ function SignUpPage() {
       return;
     }
 
-    navigate({
-      to: "/verify-otp",
-      search: { email: trimmed },
-    });
+    setIsLoading(true);
+    try {
+      await signUp({ email: trimmed, password, name: name.trim() || undefined });
+      toast.success("Verification code sent!", {
+        description: `Check your inbox at ${trimmed}.`,
+      });
+      navigate({ to: "/verify-otp", search: { email: trimmed } });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <AuthShell title="Create your account" subtitle="Sign up to start generating ad creatives">
-      <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <div className="space-y-2">
+          <Label htmlFor="signup-name" className="text-ink">
+            Name <span className="text-warm-gray font-normal">(optional)</span>
+          </Label>
+          <Input
+            id="signup-name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={isLoading}
+            className="h-11 rounded-xl border-border bg-white px-4 text-base shadow-surface-xs md:text-sm"
+          />
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="signup-email" className="text-ink">
             Email
@@ -64,6 +99,7 @@ function SignUpPage() {
             placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
             className="h-11 rounded-xl border-border bg-white px-4 text-base shadow-surface-xs md:text-sm"
           />
         </div>
@@ -80,6 +116,7 @@ function SignUpPage() {
             placeholder="At least 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
             className="h-11 rounded-xl border-border bg-white px-4 text-base shadow-surface-xs md:text-sm"
           />
         </div>
@@ -96,6 +133,7 @@ function SignUpPage() {
             placeholder="Repeat your password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
+            disabled={isLoading}
             className="h-11 rounded-xl border-border bg-white px-4 text-base shadow-surface-xs md:text-sm"
           />
         </div>
@@ -109,9 +147,17 @@ function SignUpPage() {
         <Button
           type="submit"
           variant="outline"
-          className="btn-press h-11 w-full rounded-xl border-ink/20 bg-white text-base font-semibold text-ink shadow-surface-xs hover:bg-cream-deep/40"
+          disabled={isLoading}
+          className="btn-press h-11 w-full rounded-xl border-ink/20 bg-white text-base font-semibold text-ink shadow-surface-xs hover:bg-cream-deep/40 disabled:opacity-60"
         >
-          Sign up
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Creating account…
+            </span>
+          ) : (
+            "Sign up"
+          )}
         </Button>
       </form>
 
@@ -126,9 +172,7 @@ function SignUpPage() {
 
       <GoogleAuthButton
         label="Continue with Google"
-        onClick={() =>
-          toast.message("Google sign-in", { description: "Connect your backend to enable OAuth." })
-        }
+        onClick={redirectToGoogleLogin}
       />
 
       <p className="mt-8 text-center text-sm text-warm-gray">

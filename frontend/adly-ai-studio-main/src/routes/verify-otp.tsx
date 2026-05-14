@@ -2,10 +2,14 @@ import { useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useAuth } from "@/context/AuthContext";
+import { verifyOtp, resendOtp } from "@/lib/auth";
+import { ApiError } from "@/lib/api";
 
 const searchSchema = z.object({
   email: z.string().optional().catch(undefined),
@@ -28,22 +32,60 @@ const otpSlotClass =
 function VerifyOtpPage() {
   const { email } = Route.useSearch();
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const submitRef = useRef<HTMLButtonElement>(null);
 
-  function handleVerify(e: React.FormEvent) {
+  async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!email) {
+      setError("No email found. Please go back and sign up again.");
+      return;
+    }
     if (value.length !== 6) {
       setError("Enter the 6-digit code.");
       return;
     }
 
-    toast.success("Email verified (demo)", {
-      description: "In production, validate the code on your server.",
-    });
-    navigate({ to: "/login" });
+    setIsLoading(true);
+    try {
+      const data = await verifyOtp({ email, code: value });
+      login(data.accessToken, data.user);
+      toast.success("Email verified! Welcome to ADly AI 🎉");
+      navigate({ to: "/generate-image" });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+      setValue("");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!email) return;
+    setIsResending(true);
+    setError(null);
+    try {
+      await resendOtp(email);
+      toast.success("Code resent!", { description: `Check your inbox at ${email}.` });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        toast.error(err.message);
+      } else {
+        toast.error("Failed to resend code. Please try again.");
+      }
+    } finally {
+      setIsResending(false);
+    }
   }
 
   return (
@@ -70,6 +112,7 @@ function VerifyOtpPage() {
             }}
             containerClassName="justify-center gap-1.5 sm:gap-2"
             aria-label="One-time password"
+            disabled={isLoading}
           >
             <InputOTPGroup>
               <InputOTPSlot index={0} className={otpSlotClass} />
@@ -90,9 +133,17 @@ function VerifyOtpPage() {
         <Button
           ref={submitRef}
           type="submit"
-          className="btn-press h-11 w-full rounded-xl border border-transparent bg-caramel text-base font-semibold text-white shadow-surface-sm hover:bg-caramel-deep"
+          disabled={isLoading || value.length !== 6}
+          className="btn-press h-11 w-full rounded-xl border border-transparent bg-caramel text-base font-semibold text-white shadow-surface-sm hover:bg-caramel-deep disabled:opacity-60"
         >
-          Verify & continue
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Verifying…
+            </span>
+          ) : (
+            "Verify & continue"
+          )}
         </Button>
 
         <p className="text-center text-sm text-warm-gray">
@@ -106,12 +157,11 @@ function VerifyOtpPage() {
           {" · "}
           <button
             type="button"
-            className="font-medium text-caramel underline-offset-4 hover:text-caramel-deep hover:underline"
-            onClick={() =>
-              toast.message("Resend code", { description: "Hook this up to your email provider." })
-            }
+            disabled={isResending}
+            className="font-medium text-caramel underline-offset-4 hover:text-caramel-deep hover:underline disabled:opacity-50"
+            onClick={handleResend}
           >
-            Resend code
+            {isResending ? "Sending…" : "Resend code"}
           </button>
         </p>
       </form>
