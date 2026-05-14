@@ -1,8 +1,9 @@
-"""FastAPI server — ADly image generation (FLUX i2i + Gemini) + Auth."""
+"""FastAPI server — ADbee image generation (FLUX i2i + Gemini) + Auth."""
 
 from __future__ import annotations
 
 import base64
+import logging
 import os
 import sys
 from contextlib import asynccontextmanager
@@ -21,6 +22,9 @@ from starlette.middleware.sessions import SessionMiddleware
 from config.database import close_db, connect_db
 from flux_i2i_service import GEMINI_MODEL_ID, generate_ad_image, image_to_png_bytes
 from routes.auth import router as auth_router
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 
 # ── Lifespan (startup / shutdown) ──────────────────────────────────────────────
@@ -104,20 +108,30 @@ def generate_image_endpoint(
     steps: Annotated[str | None, Form()] = None,
     guidance: Annotated[str | None, Form()] = None,
 ) -> GenerateImageResponse:
+    logger.info("Received request to generate image.")
     if not file.content_type or not file.content_type.startswith("image/"):
+        logger.warning(f"Invalid content type: {file.content_type}")
         raise HTTPException(status_code=400, detail="Upload must be an image file.")
     raw = file.file.read()
     if not raw:
+        logger.warning("Received empty file.")
         raise HTTPException(status_code=400, detail="Empty file.")
     model_id = (gemini_model or "").strip() or GEMINI_MODEL_ID
+    
     try:
         n_steps = _optional_int(steps)
+    except ValueError:
+        logger.warning(f"Invalid steps provided: {steps}. Falling back to default.")
+        n_steps = None
+
+    try:
         g_scale = _optional_float(guidance)
-    except ValueError as e:
-        raise HTTPException(
-            status_code=400,
-            detail="Parameters steps and guidance must be valid numbers when provided.",
-        ) from e
+    except ValueError:
+        logger.warning(f"Invalid guidance provided: {guidance}. Falling back to default.")
+        g_scale = None
+
+    logger.info(f"Parameters - prompt: '{prompt}', skip_gemini: {skip_gemini}, model: {model_id}, n_steps: {n_steps}, g_scale: {g_scale}")
+
     try:
         out_image, flux_prompt = generate_ad_image(
             raw,
@@ -127,17 +141,28 @@ def generate_image_endpoint(
             num_inference_steps=n_steps,
             guidance_scale=g_scale,
         )
+        logger.info("Image generated successfully.")
     except ValueError as e:
+        logger.error(f"ValueError during image generation: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e)) from e
     except RuntimeError as e:
+        logger.error(f"RuntimeError during image generation: {e}", exc_info=True)
         raise HTTPException(status_code=502, detail=str(e)) from e
     except Exception as e:
+        logger.error(f"Unexpected error during image generation: {e}", exc_info=True)
         raise HTTPException(status_code=502, detail=f"Generation failed: {e}") from e
 
     png = image_to_png_bytes(out_image)
     b64 = base64.standard_b64encode(png).decode("ascii")
+    logger.info("Successfully encoded generated image to base64.")
+    
     return GenerateImageResponse(
         image_base64=b64,
         mime_type="image/png",
         flux_prompt=flux_prompt,
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 4000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -15,8 +15,8 @@ import { ApiError } from "@/lib/api";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Log in — ADly AI" },
-      { name: "description", content: "Log in to ADly AI to generate ad creatives." },
+      { title: "Log in — ADbee AI" },
+      { name: "description", content: "Log in to ADbee AI to generate ad creatives." },
     ],
   }),
   component: LoginPage,
@@ -24,7 +24,13 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const { login, loginWithCredentials } = useAuth();
+  const { login, loginWithCredentials, isAuthenticated, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate({ to: "/" });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +54,7 @@ function LoginPage() {
     try {
       await loginWithCredentials(trimmed, password);
       toast.success("Welcome back! 👋");
-      navigate({ to: "/generate-image" });
+      navigate({ to: "/" });
     } catch (err) {
       if (err instanceof ApiError) {
         // Unverified account — redirect to OTP page

@@ -1,8 +1,17 @@
-import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Upload, Sparkles, Download, Image as ImageIcon, Video, Menu } from "lucide-react";
+﻿import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Upload, Sparkles, Download, Image as ImageIcon, Video, Menu, User, LogOut } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useAuth } from "@/context/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import fashionShowcase from "@/assets/Fashion.png";
 import skincareShowcase from "@/assets/Skincare.png";
 import sneakersShowcase from "@/assets/Sneakers.png";
@@ -48,6 +57,16 @@ const marquee = [
 
 function Navbar() {
   const [open, setOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate({ to: "/" });
+  };
+
+  const generateImageTo = isAuthenticated ? "/generate-image" : "/login";
+  const generateVideoTo = isAuthenticated ? "/generate-video" : "/login";
 
   const navLinks = (
     <>
@@ -59,14 +78,14 @@ function Navbar() {
         Home
       </Link>
       <Link
-        to="/login"
+        to={generateImageTo}
         className="rounded-lg px-3 py-3 text-base text-ink hover:bg-cream-deep md:px-0 md:py-0 md:text-sm md:hover:bg-transparent md:hover:text-warm-gray"
         onClick={() => setOpen(false)}
       >
         Generate Image
       </Link>
       <Link
-        to="/login"
+        to={generateVideoTo}
         className="rounded-lg px-3 py-3 text-base text-ink hover:bg-cream-deep md:px-0 md:py-0 md:text-sm md:hover:bg-transparent md:hover:text-warm-gray"
         onClick={() => setOpen(false)}
       >
@@ -107,22 +126,62 @@ function Navbar() {
                 <SheetTitle className="text-left font-serif text-lg text-ink">Menu</SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-1 border-t border-border pt-4">{navLinks}</nav>
-              <Link
-                to="/login"
-                onClick={() => setOpen(false)}
-                className="btn-press mt-6 flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black"
-              >
-                Get Started
-              </Link>
+              {!isAuthenticated ? (
+                <Link
+                  to="/login"
+                  onClick={() => setOpen(false)}
+                  className="btn-press mt-6 flex min-h-11 w-full items-center justify-center rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-black"
+                >
+                  Get Started
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setOpen(false);
+                  }}
+                  className="btn-press mt-6 flex min-h-11 w-full items-center justify-center rounded-full border border-ink/20 bg-transparent px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-ink/5"
+                >
+                  Log out
+                </button>
+              )}
             </SheetContent>
           </Sheet>
-          <Link
-            to="/login"
-            className="btn-press inline-flex min-h-10 items-center rounded-full bg-ink px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-black sm:px-5 sm:text-sm"
-          >
-            <span className="sm:hidden">Start</span>
-            <span className="hidden sm:inline">Get Started</span>
-          </Link>
+          
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-cream transition-colors hover:bg-cream-deep focus:outline-none">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-transparent text-ink">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : <User className="h-4 w-4" />}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-md">
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    {user?.name && <p className="font-medium text-ink">{user.name}</p>}
+                    {user?.email && <p className="w-[150px] truncate text-sm text-warm-gray">{user.email}</p>}
+                  </div>
+                </div>
+                <div className="h-px bg-border my-1" />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Link
+              to="/login"
+              className="btn-press inline-flex min-h-10 items-center rounded-full bg-ink px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-black sm:px-5 sm:text-sm"
+            >
+              <span className="sm:hidden">Start</span>
+              <span className="hidden sm:inline">Get Started</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>
@@ -130,6 +189,10 @@ function Navbar() {
 }
 
 function Landing() {
+  const { isAuthenticated } = useAuth();
+  const generateImageTo = isAuthenticated ? "/generate-image" : "/login";
+  const generateVideoTo = isAuthenticated ? "/generate-video" : "/login";
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -154,7 +217,7 @@ function Landing() {
             className="mx-auto mt-5 max-w-2xl text-base text-warm-gray sm:mt-6 sm:text-lg md:text-xl animate-fade-up"
             style={{ animationDelay: "240ms" }}
           >
-            Upload your product image, describe your vision, and let ADly AI generate
+            Upload your product image, describe your vision, and let ADbee AI generate
             scroll-stopping advertising creatives in seconds.
           </p>
           <div
@@ -162,13 +225,13 @@ function Landing() {
             style={{ animationDelay: "360ms" }}
           >
             <Link
-              to="/login"
+              to={generateImageTo}
               className="btn-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ink/10 bg-caramel px-6 py-3.5 font-medium text-white shadow-surface-sm transition-[color,background-color,box-shadow,transform] hover:bg-caramel-deep hover:shadow-surface-md"
             >
               Generate Image →
             </Link>
             <Link
-              to="/login"
+              to={generateVideoTo}
               className="btn-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-ink/10 bg-caramel px-6 py-3.5 font-medium text-white shadow-surface-sm transition-[color,background-color,box-shadow,transform] hover:bg-caramel-deep hover:shadow-surface-md"
             >
               Generate Video →
@@ -227,7 +290,7 @@ function Landing() {
               {
                 icon: <Sparkles className="h-5 w-5" />,
                 title: "Describe Your Vision",
-                body: "Write a prompt or leave it blank. ADly AI generates creative ad copy and scene suggestions automatically.",
+                body: "Write a prompt or leave it blank. ADbee AI generates creative ad copy and scene suggestions automatically.",
               },
               {
                 icon: <Download className="h-5 w-5" />,
@@ -271,14 +334,14 @@ function Landing() {
               icon={<ImageIcon className="h-7 w-7" />}
               title="AI Ad Images"
               body="Perfect product shots, lifestyle scenes, and editorial layouts — generated from a single photo."
-              to="/login"
+              to={generateImageTo}
             />
             <FormatCard
               bg="bg-powder"
               icon={<Video className="h-7 w-7" />}
               title="AI Ad Videos"
               body="Animated product showcases, UGC-style clips, and cinematic ads — no camera needed."
-              to="/login"
+              to={generateVideoTo}
             />
           </div>
         </div>
@@ -292,10 +355,10 @@ function Landing() {
             <Link to="/" className="transition-colors hover:text-warm-gray">
               Home
             </Link>
-            <Link to="/login" className="transition-colors hover:text-warm-gray">
+            <Link to={generateImageTo} className="transition-colors hover:text-warm-gray">
               Generate Image
             </Link>
-            <Link to="/login" className="transition-colors hover:text-warm-gray">
+            <Link to={generateVideoTo} className="transition-colors hover:text-warm-gray">
               Generate Video
             </Link>
             <a href="#" className="transition-colors hover:text-warm-gray">

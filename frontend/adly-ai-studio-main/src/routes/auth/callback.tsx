@@ -1,4 +1,4 @@
-/**
+﻿/**
  * /auth/callback — handles the redirect from Google OAuth.
  *
  * After Google → backend redirect, the backend sends:
@@ -25,7 +25,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/auth/callback")({
   validateSearch: (raw) => searchSchema.parse(raw),
   head: () => ({
-    meta: [{ title: "Signing in… — ADly AI" }],
+    meta: [{ title: "Signing in… — ADbee AI" }],
   }),
   component: AuthCallbackPage,
 });

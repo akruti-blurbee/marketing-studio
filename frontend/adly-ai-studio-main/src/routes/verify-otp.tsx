@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+﻿import { useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/verify-otp")({
   validateSearch: (raw) => searchSchema.parse(raw),
   head: () => ({
     meta: [
-      { title: "Verify email — ADly AI" },
+      { title: "Verify email — ADbee AI" },
       { name: "description", content: "Enter the verification code sent to your email." },
     ],
   }),
@@ -56,8 +56,8 @@ function VerifyOtpPage() {
     try {
       const data = await verifyOtp({ email, code: value });
       login(data.accessToken, data.user);
-      toast.success("Email verified! Welcome to ADly AI 🎉");
-      navigate({ to: "/generate-image" });
+      toast.success("Email verified! Welcome to ADbee AI 🎉");
+      navigate({ to: "/" });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);

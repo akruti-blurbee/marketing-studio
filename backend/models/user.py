@@ -1,30 +1,44 @@
-"""User collection helpers — Motor + passlib."""
+"""User collection helpers — Motor + bcrypt."""
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
 from bson import ObjectId
-from passlib.context import CryptContext
-
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+import bcrypt
 
 
 # ── Hashing helpers ────────────────────────────────────────────────────────────
 
+def _prepare_secret(secret: str) -> bytes:
+    """Bcrypt limits to 72 bytes. Truncate manually to avoid ValueError."""
+    encoded = secret.encode('utf-8')
+    if len(encoded) > 72:
+        return encoded[:72]
+    return encoded
+
+
 def hash_password(plain: str) -> str:
-    return pwd_ctx.hash(plain)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(_prepare_secret(plain), salt).decode('ascii')
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_ctx.verify(plain, hashed)
+    try:
+        return bcrypt.checkpw(_prepare_secret(plain), hashed.encode('ascii'))
+    except Exception:
+        return False
 
 
 def hash_token(token: str) -> str:
-    return pwd_ctx.hash(token)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(_prepare_secret(token), salt).decode('ascii')
 
 
 def verify_token(token: str, hashed: str) -> bool:
-    return pwd_ctx.verify(token, hashed)
+    try:
+        return bcrypt.checkpw(_prepare_secret(token), hashed.encode('ascii'))
+    except Exception:
+        return False
 
 
 # ── Safe serialisation ─────────────────────────────────────────────────────────

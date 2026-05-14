@@ -1,4 +1,4 @@
-// Persistent storage for ADly AI generation threads.
+﻿// Persistent storage for ADbee AI generation threads.
 // Stored per-mode in localStorage so users can revisit prior generations.
 
 export type StoredMessage = {
@@ -12,8 +12,9 @@ export type StoredMessage = {
 
 export type Mode = "image" | "video";
 
-const KEY = (mode: Mode) => `adly:thread:${mode}`;
-const EVENT = "adly:thread-change";
+const KEY = (mode: Mode) => `adbee:thread:${mode}`;
+const HISTORY_KEY = (mode: Mode) => `adbee:history:${mode}`;
+const EVENT = "adbee:thread-change";
 
 export function loadThread(mode: Mode): StoredMessage[] {
   if (typeof window === "undefined") return [];
@@ -36,6 +37,57 @@ export function saveThread(mode: Mode, messages: StoredMessage[]) {
   } catch {
     /* quota or serialization errors — ignore */
   }
+}
+
+export function deleteMessage(mode: Mode, messageId: string) {
+  const messages = loadThread(mode);
+  const updated = messages.filter((m) => m.id !== messageId);
+  saveThread(mode, updated);
+  // Also remove from history
+  deleteHistoryMessage(mode, messageId);
+}
+
+/* ── History (persisted archive of completed generations) ── */
+
+export function loadHistory(mode: Mode): StoredMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY(mode));
+    if (!raw) return [];
+    return JSON.parse(raw) as StoredMessage[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveHistory(mode: Mode, messages: StoredMessage[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(HISTORY_KEY(mode), JSON.stringify(messages));
+    window.dispatchEvent(new CustomEvent(EVENT));
+  } catch {
+    /* quota errors — ignore */
+  }
+}
+
+/** Archive completed (non-loading) messages from the active thread into history. */
+export function archiveThread(mode: Mode) {
+  const current = loadThread(mode);
+  if (current.length === 0) return;
+  const completed = current.filter((m) => !m.loading && m.result);
+  if (completed.length === 0) return;
+  const history = loadHistory(mode);
+  const existingIds = new Set(history.map((m) => m.id));
+  const newEntries = completed.filter((m) => !existingIds.has(m.id));
+  if (newEntries.length > 0) {
+    saveHistory(mode, [...newEntries, ...history]);
+  }
+}
+
+function deleteHistoryMessage(mode: Mode, messageId: string) {
+  const history = loadHistory(mode);
+  const updated = history.filter((m) => m.id !== messageId);
+  saveHistory(mode, updated);
 }
 
 export function subscribeThreads(cb: () => void): () => void {

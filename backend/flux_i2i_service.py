@@ -14,7 +14,7 @@ from huggingface_hub import InferenceClient
 from PIL import Image
 
 MODEL_ID = "black-forest-labs/FLUX.2-klein-9B"
-GEMINI_MODEL_ID = "gemini-2.5-flash-lite"
+GEMINI_MODEL_ID = "gemini-2.5-flash"
 
 FLUX_PROMPT_BUILDER = """\
 You are a senior creative director and prompt engineer writing prompts for open-source \

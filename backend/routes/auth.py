@@ -1,4 +1,4 @@
-"""All authentication routes — mirrors the Node.js auth-backend exactly."""
+﻿"""All authentication routes — mirrors the Node.js auth-backend exactly."""
 from __future__ import annotations
 
 import os
@@ -366,4 +366,4 @@ async def google_callback(request: Request, response: Response):
 @router.get("/health")
 async def health():
     from datetime import datetime, timezone
-    return {"ok": True, "service": "adly-auth", "ts": datetime.now(timezone.utc).isoformat()}
+    return {"ok": True, "service": "adbee-auth", "ts": datetime.now(timezone.utc).isoformat()}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -8,15 +8,15 @@ import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signUp } from "@/lib/auth";
-import { redirectToGoogleLogin } from "@/lib/auth";
+import { signUp, redirectToGoogleLogin } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
-      { title: "Sign up — ADly AI" },
-      { name: "description", content: "Create your ADly AI account to generate ad creatives." },
+      { title: "Sign up — ADbee AI" },
+      { name: "description", content: "Create your ADbee AI account to generate ad creatives." },
     ],
   }),
   component: SignUpPage,
@@ -24,6 +24,13 @@ export const Route = createFileRoute("/signup")({
 
 function SignUpPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate({ to: "/" });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

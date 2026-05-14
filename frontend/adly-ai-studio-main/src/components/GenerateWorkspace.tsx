@@ -23,6 +23,8 @@ import {
   fileToDataUrl,
   loadThread,
   saveThread,
+  deleteMessage,
+  archiveThread,
   type StoredMessage,
 } from "@/lib/threadStore";
 import { generateAdImage, resultToDataUrl } from "@/lib/generateImageApi";
@@ -33,6 +35,20 @@ type Message = StoredMessage;
 
 const DEFAULT_PROMPT_LABEL = "Auto-generated ad scene";
 
+/** crypto.randomUUID() is only available in secure contexts (HTTPS/localhost).
+ *  This helper falls back to a manual UUID v4 so the app works over plain HTTP. */
+function generateId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  // Manual UUID v4 fallback
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 const samples = [
   "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=70",
   "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&q=70",
@@ -41,7 +57,7 @@ const samples = [
 ];
 
 export function GenerateWorkspace({ mode }: { mode: Mode }) {
-  const [messages, setMessages] = useState<Message[]>(() => loadThread(mode));
+  const [messages, setMessages] = useState<Message[]>([]);
   const [prompt, setPrompt] = useState("");
   const [upload, setUpload] = useState<string | null>(null);
   const [videoStyle, setVideoStyle] = useState<"Cinematic" | "UGC Style" | "Product Showcase">(
@@ -55,9 +71,12 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
 
   const isVideo = mode === "video";
 
-  // Reload when switching modes (component is reused across routes).
+  // Archive completed generations to history, then start a fresh chat on mount/mode-switch.
   useEffect(() => {
-    setMessages(loadThread(mode));
+    archiveThread(mode);
+    // Clear the active thread so the chat starts fresh
+    saveThread(mode, []);
+    setMessages([]);
   }, [mode]);
 
   // Persist on every change. Skip writing while a message is loading so we
@@ -65,6 +84,8 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
   useEffect(() => {
     if (messages.some((m) => m.loading)) return;
     saveThread(mode, messages);
+    // Also archive completed messages to history so they appear in sidebar
+    archiveThread(mode);
   }, [mode, messages]);
 
   // Auto-scroll to newest message.
@@ -97,7 +118,7 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
   };
 
   const runVideoMockGeneration = () => {
-    const id = crypto.randomUUID();
+    const id = generateId();
     const msg: Message = {
       id,
       imageUrl: upload!,
@@ -124,7 +145,7 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
   const runImageGeneration = async (file: File) => {
     const previewUrl = upload!;
     const userPrompt = prompt.trim();
-    const id = crypto.randomUUID();
+    const id = generateId();
     const msg: Message = {
       id,
       imageUrl: previewUrl,
@@ -195,6 +216,12 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
     }
   };
 
+  const handleDeleteMessage = (messageId: string) => {
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    deleteMessage(mode, messageId);
+    toast.success("Generation deleted");
+  };
+
   const clearThread = () => {
     if (messages.length === 0) return;
     if (confirm("Clear all generations in this thread?")) {
@@ -253,7 +280,7 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
                 isVideo ? "bg-powder" : "bg-mint"
               }`}
             >
-              <span className="hidden sm:inline">ADly AI · </span>
+              <span className="hidden sm:inline">ADbee AI · </span>
               {isVideo ? "Video" : "Image"}
             </span>
           </div>
@@ -272,6 +299,7 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
                     m={m}
                     isVideo={isVideo}
                     onRegenerate={() => void regenerateMessage(m)}
+                    onDelete={() => handleDeleteMessage(m.id)}
                   />
                 ))}
                 <div ref={threadEndRef} />
@@ -358,7 +386,7 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
                   placeholder="Describe your ad… (optional)"
-                  className="min-h-11 w-full flex-1 rounded-lg border-0 bg-cream-deep/50 px-3 py-2 text-sm text-ink placeholder:text-warm-gray outline-none focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:ring-offset-0 sm:min-h-0 sm:bg-transparent sm:px-0 sm:py-0"
+                  className="appearance-none min-h-11 w-full flex-1 rounded-lg border-none bg-cream-deep/50 px-3 py-2 text-sm text-ink placeholder:text-warm-gray outline-none focus:outline-none focus:ring-0 shadow-none sm:min-h-0 sm:bg-transparent sm:px-0 sm:py-0"
                   enterKeyHint="send"
                 />
 
@@ -377,7 +405,7 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
             </div>
 
             <p className="mt-2 text-center text-xs text-warm-gray">
-              ✦ Prompt is optional — ADly AI will auto-generate an ad scene from your product.
+              ✦ Prompt is optional — ADbee AI will auto-generate an ad scene from your product.
             </p>
           </div>
         </div>
@@ -467,10 +495,12 @@ function ThreadItem({
   m,
   isVideo,
   onRegenerate,
+  onDelete,
 }: {
   m: Message;
   isVideo: boolean;
   onRegenerate: () => void;
+  onDelete: () => void;
 }) {
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
 
@@ -494,7 +524,7 @@ function ThreadItem({
       {/* AI response */}
       <div className="flex justify-start">
         {m.loading ? (
-          <div className="w-full max-w-full space-y-3 sm:max-w-lg">
+          <div className="w-full max-w-full space-y-3 sm:max-w-sm">
             <div className="flex items-center gap-1.5 px-1">
               <span className="h-2 w-2 rounded-full bg-caramel dot" style={{ animationDelay: "0s" }} />
               <span
@@ -511,7 +541,7 @@ function ThreadItem({
             </div>
           </div>
         ) : (
-          <div className="w-full max-w-full rounded-2xl border border-border bg-white p-3 shadow-surface-sm sm:max-w-lg">
+          <div className="w-full max-w-full rounded-2xl border border-border bg-white p-3 shadow-surface-sm sm:max-w-sm">
             <div
               role="button"
               tabIndex={0}
@@ -528,7 +558,7 @@ function ThreadItem({
               <img
                 src={m.result}
                 alt="generated ad"
-                className={`w-full object-cover ${isVideo ? "aspect-video" : "aspect-[4/3]"}`}
+                className={`w-full ${isVideo ? "aspect-video object-cover" : "h-auto object-contain rounded-xl"}`}
               />
               {isVideo && (
                 <div
@@ -547,7 +577,7 @@ function ThreadItem({
                 onClick={() => {
                   if (!m.result) return;
                   const ext = isVideo ? "mp4" : "png";
-                  downloadDataUrl(m.result, `adly-generated-${m.id.slice(0, 8)}.${ext}`);
+                  downloadDataUrl(m.result, `adbee-generated-${m.id.slice(0, 8)}.${ext}`);
                 }}
               >
                 Download {isVideo ? "MP4" : "PNG"}
@@ -556,6 +586,7 @@ function ThreadItem({
                 Regenerate
               </ActionBtn>
               <ActionBtn icon={<Pencil className="h-3.5 w-3.5" />}>Edit Prompt</ActionBtn>
+
             </div>
           </div>
         )}
@@ -576,16 +607,23 @@ function ActionBtn({
   children,
   icon,
   onClick,
+  variant,
 }: {
   children: React.ReactNode;
   icon: React.ReactNode;
   onClick?: () => void;
+  variant?: "default" | "danger";
 }) {
+  const isDanger = variant === "danger";
   return (
     <button
       type="button"
       onClick={onClick}
-      className="btn-press flex items-center gap-1.5 rounded-lg border border-border bg-cream px-3 py-1.5 text-xs text-ink transition-colors hover:bg-cream-deep"
+      className={`btn-press flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs transition-colors ${
+        isDanger
+          ? "border-red-200 bg-red-50 text-red-600 hover:bg-red-100"
+          : "border-border bg-cream text-ink hover:bg-cream-deep"
+      }`}
     >
       {icon}
       {children}

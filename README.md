@@ -1,4 +1,4 @@
-# Marketing Studio
+﻿# Marketing Studio
 
 A full-stack AI-powered marketing studio application designed for generating and managing marketing assets. The platform uses advanced generative AI models (including Flux image-to-image) to create stunning marketing templates and images, supported by a secure, unified backend.
 
@@ -33,7 +33,7 @@ marketing-studio/
 │   ├── main.py         # Entry point for the FastAPI server
 │   └── ...             # API routes, auth logic, and AI services
 ├── frontend/           # React frontend application
-│   └── adly-ai-studio-main/ # Main frontend workspace
+│   └── adbee-ai-studio-main/ # Main frontend workspace
 ├── requirements.txt    # Python dependencies
 └── .env                # Environment variables (MongoDB URI, API keys, etc.)
 ```
@@ -78,7 +78,7 @@ marketing-studio/
 
 1. **Navigate to the frontend directory**:
    ```bash
-   cd marketing-studio/frontend/adly-ai-studio-main
+   cd marketing-studio/frontend/adbee-ai-studio-main
    ```
 
 2. **Install dependencies**:

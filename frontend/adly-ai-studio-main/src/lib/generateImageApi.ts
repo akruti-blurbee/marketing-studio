@@ -1,4 +1,4 @@
-const defaultBase = "http://127.0.0.1:8000";
+const defaultBase = "http://127.0.0.1:4000";
 
 export function getApiBaseUrl(): string {
   const v = import.meta.env.VITE_API_BASE_URL;
