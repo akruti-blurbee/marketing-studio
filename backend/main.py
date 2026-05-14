@@ -1,4 +1,4 @@
-"""FastAPI server — ADbee image generation (FLUX i2i + Gemini) + Auth."""
+
 
 from __future__ import annotations
 

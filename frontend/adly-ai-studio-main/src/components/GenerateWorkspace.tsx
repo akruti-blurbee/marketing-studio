@@ -28,6 +28,7 @@ import {
   type StoredMessage,
 } from "@/lib/threadStore";
 import { generateAdImage, resultToDataUrl } from "@/lib/generateImageApi";
+import { ImageLightbox } from "./ImageLightbox";
 
 type Mode = "image" | "video";
 
@@ -92,6 +93,28 @@ export function GenerateWorkspace({ mode }: { mode: Mode }) {
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages]);
+
+  // Handle paste events to upload images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            e.preventDefault();
+            pendingFileRef.current = file;
+            const dataUrl = await fileToDataUrl(file);
+            setUpload(dataUrl);
+            break;
+          }
+        }
+      }
+    };
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, []);
 
   const onFile = async (f?: File) => {
     if (!f) return;
@@ -438,58 +461,7 @@ function downloadDataUrl(dataUrl: string, filename: string) {
   a.click();
 }
 
-function ImageLightbox({
-  open,
-  src,
-  alt,
-  onClose,
-}: {
-  open: boolean;
-  src: string;
-  alt: string;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
 
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label={alt}
-      onClick={onClose}
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        className="btn-press absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
-        aria-label="Close full screen image"
-      >
-        <X className="h-5 w-5" />
-      </button>
-      <img
-        src={src}
-        alt={alt}
-        className="max-h-[min(92vh,100%)] max-w-[min(92vw,100%)] rounded-lg object-contain shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      />
-    </div>
-  );
-}
 
 function ThreadItem({
   m,

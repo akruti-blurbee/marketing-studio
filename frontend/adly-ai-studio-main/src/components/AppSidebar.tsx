@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Image as ImageIcon, Video, User, Trash2 } from "lucide-react";
 import { Logo } from "./Logo";
 import { loadThread, loadHistory, subscribeThreads, deleteMessage, type Mode, type StoredMessage } from "@/lib/threadStore";
+import { ImageLightbox } from "./ImageLightbox";
 
 type Recent = StoredMessage & { mode: Mode };
 
@@ -32,6 +33,7 @@ export function AppSidebarNav({
   onNavigate?: () => void;
 }) {
   const [recents, setRecents] = useState<Recent[]>([]);
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
 
   useEffect(() => {
     setRecents(readRecents());
@@ -87,11 +89,10 @@ export function AppSidebarNav({
           <ul className="mt-3 space-y-2">
             {recents.map((r) => (
               <li key={r.id} className="group relative">
-                <Link
-                  to={r.mode === "video" ? "/generate-video" : "/generate-image"}
-                  onClick={close}
-                  className="flex items-center gap-3 rounded-lg px-2 py-2 pr-8 text-xs text-warm-gray hover:bg-cream-deep transition-colors"
-                  title={r.prompt}
+                <button
+                  type="button"
+                  onClick={() => setLightbox({ src: r.result || r.imageUrl, alt: r.prompt })}
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 pr-8 text-left text-xs text-warm-gray hover:bg-cream-deep transition-colors outline-none focus-visible:ring-2 ring-ink cursor-zoom-in"
                 >
                   <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-cream-deep">
                     <img
@@ -100,8 +101,10 @@ export function AppSidebarNav({
                       className="h-full w-full object-cover"
                     />
                   </div>
-                  <span className="truncate">{r.prompt}</span>
-                </Link>
+                  <span className="truncate flex-1" title={r.prompt}>
+                    {r.prompt}
+                  </span>
+                </button>
                 <button
                   type="button"
                   aria-label="Delete generation"
@@ -125,6 +128,13 @@ export function AppSidebarNav({
           <div className="text-warm-gray">Free plan</div>
         </div>
       </div>
+
+      <ImageLightbox
+        open={lightbox !== null}
+        src={lightbox?.src ?? ""}
+        alt={lightbox?.alt ?? ""}
+        onClose={() => setLightbox(null)}
+      />
     </>
   );
 }
